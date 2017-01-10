@@ -5,15 +5,13 @@ module PriceGrabber
   class Request
     attr_reader :environment
 
-    def initialize(version:, pid:, key:, asin: nil, q: nil, masterid: nil, upc: nil, environment: :staging, driver: :net_http)
+    def initialize(key:, publisher_id:, asin: nil, q: nil, upc: nil, environment: :staging, driver: :net_http)
       @environment = environment
-      @version = version
-      @pid = pid
+      @publisher_id = publisher_id
       @key = key
       @asin = asin
       @q = q
       @upc = upc
-      @masterid = [*masterid]
       @driver = driver
       @wants = []
     end
@@ -22,19 +20,15 @@ module PriceGrabber
       uri = ::URI::HTTP.build({})
       uri.scheme = "http"
       if @environment == :production
-        uri.host = "sws.pricegrabber.com"
+        uri.host = "catalog.bizrate.com"
       else
-        uri.host = "sws.api.pricegrabber.com"
+        uri.host = "catalog.bizrate.com"
       end
-      uri.path = "/search_xml.php"
+      uri.path = "/services/catalog/v1/api/product"
       uri.query = [
-        version,
-        pid,
         key,
-        asin,
-        q,
-        upc,
-        masterid,
+        publisher_id,
+        asin_or_upc || q
       ].compact.sort.join("&")
       uri
     end
@@ -66,39 +60,28 @@ module PriceGrabber
     end
 
     def pid
-      "pid=#{@pid}"
+      "publisherId=#{@pid}"
     end
 
     def key
-      "key=#{@key}"
+      "apiKey=#{@key}"
     end
 
-    def asin
+    def publisher_id
+      "publisherId=#{@publisher_id}"
+    end
+
+    def asin_or_upc
       if @asin
-        "asin=#{@asin}"
+        "productIdType=MPID&merchantId=184056&productId=#{@asin}"
+      elsif @upc
+        "productIdType=UPC&productId=#{@upc}"
       end
     end
 
     def q
       if @q
-        "q=#{@q.gsub(/\s/, '+')}"
-      end
-    end
-
-    def upc
-      if @upc
-        "upc=#{@upc}"
-      end
-    end
-
-    def masterid
-      case @masterid.length
-      when 0
-        nil
-      when 1
-        "masterid=#{@masterid.join(",")}"
-      else
-        "masterids=#{@masterid.join(",")}"
+        "keyword=#{@q.gsub(/\s/, '+')}"
       end
     end
   end

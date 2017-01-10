@@ -3,63 +3,51 @@ require 'spec_helper'
 describe PriceGrabber::Request do
   describe 'url construction' do
     it 'produces the correct URL for a given ASIN' do
-      req = described_class.new(version: '2.55', pid: '8675309', key: '123456', asin: 'B007ARLMI0')
-      expect(req.to_s).to eq('http://sws.api.pricegrabber.com/search_xml.php?asin=B007ARLMI0&key=123456&pid=8675309&version=2.55')
+      req = described_class.new(key: '123456', publisher_id: '654321', asin: 'B007ARLMI0')
+      expect(req.to_s).to eq('http://catalog.bizrate.com/services/catalog/v1/api/product?apiKey=123456&productIdType=MPID&merchantId=184056&productId=B007ARLMI0&publisherId=654321')
     end
 
     describe 'full text queries' do
       it 'constructs urls for full text queries' do
-        req = described_class.new(version: '2.55', pid: '8675309', key: '123456', q: 'wool sweater')
-        expect(req.to_s).to eq('http://sws.api.pricegrabber.com/search_xml.php?key=123456&pid=8675309&q=wool+sweater&version=2.55')
-      end
-    end
-
-    describe 'masterid' do
-      it 'constructs queries for masterids' do
-        req = described_class.new(version: '2.55', pid: '8675309', key: '123456', masterid: '67360634')
-        expect(req.to_s).to eq('http://sws.api.pricegrabber.com/search_xml.php?key=123456&masterid=67360634&pid=8675309&version=2.55')
-      end
-
-      it 'constructs queries for multiple masterids' do
-        req = described_class.new(version: '2.55', pid: '8675309', key: '123456', masterid: ['24239727', '12721949'])
-        expect(req.to_s).to eq('http://sws.api.pricegrabber.com/search_xml.php?key=123456&masterids=24239727,12721949&pid=8675309&version=2.55')
+        req = described_class.new(key: '123456', publisher_id: '654321', q: 'wool sweater')
+        expect(req.to_s).to eq('http://catalog.bizrate.com/services/catalog/v1/api/product?apiKey=123456&keyword=wool+sweater&publisherId=654321')
       end
     end
 
     it 'constructs queries for UPCs' do
-      req = described_class.new(version: '2.55', pid: '8675309', key: '123456', upc: '004815162342')
-      expect(req.to_s).to eq('http://sws.api.pricegrabber.com/search_xml.php?key=123456&pid=8675309&upc=004815162342&version=2.55')
+      req = described_class.new(key: '123456', publisher_id: '654321', upc: '004815162342')
+      expect(req.to_s).to eq('http://catalog.bizrate.com/services/catalog/v1/api/product?apiKey=123456&productIdType=UPC&productId=004815162342&publisherId=654321')
     end
 
     it 'provides to_curl for debugging purposes' do
-      req = described_class.new(version: '2.55', pid: '8675309', key: '123456', asin: 'B007ARLMI0')
-      expect(req.to_curl).to eq('curl -G \'http://sws.api.pricegrabber.com/search_xml.php?asin=B007ARLMI0&key=123456&pid=8675309&version=2.55\'')
+      req = described_class.new(key: '123456', publisher_id: '654321', asin: 'B007ARLMI0')
+      expect(req.to_curl).to eq('curl -G \'http://catalog.bizrate.com/services/catalog/v1/api/product?apiKey=123456&productIdType=MPID&merchantId=184056&productId=B007ARLMI0&publisherId=654321\'')
     end
 
     it 'switches between production and staging urls' do
-      req = described_class.new(version: '2.55', pid: '8675309', key: '123456', asin: 'B007ARLMI0', environment: :production)
-      expect(req.to_s).to eq('http://sws.pricegrabber.com/search_xml.php?asin=B007ARLMI0&key=123456&pid=8675309&version=2.55')
+      req = described_class.new(key: '123456', publisher_id: '654321', asin: 'B007ARLMI0', environment: :production)
+      expect(req.to_s).to eq('http://catalog.bizrate.com/services/catalog/v1/api/product?apiKey=123456&productIdType=MPID&merchantId=184056&productId=B007ARLMI0&publisherId=654321')
     end
   end
 
   describe 'environment' do
     it 'reports what environment the request is for' do
-      req = described_class.new(version: '2.55', pid: '8675309', key: '123456', asin: 'B007ARLMI0', environment: :production)
+      req = described_class.new(key: '123456', publisher_id: '654321', asin: 'B007ARLMI0', environment: :production)
       expect(req.environment).to eq(:production)
     end
   end
 
   describe 'query execution' do
     it 'returns an enumerable' do
-      req = described_class.new(version: '2.55', pid: '8675309', key: '123456', asin: 'B007ARLMI0', driver: :mock_driver)
+      req = described_class.new(key: '123456', publisher_id: '654321', asin: 'B007ARLMI0', driver: :mock_driver)
       expect(req.call.class < Enumerable).to eq(true)
     end
 
     it "allows attribute plucking" do
-      req = described_class.new(version: '2.55', pid: '8675309', key: '123456', asin: 'B007ARLMI0', driver: :mock_driver).pluck(:title, :url)
+      req = described_class.new(key: '123456', publisher_id: '654321', asin: 'B007ARLMI0', driver: :mock_driver).pluck(:"title", :"url")
       resp = req.call.first
-      expect(resp.title).to eq("S23B300B 23-inch LED LCD Monitor with MagicAngle - 1920 x 1080 - 1000:1 - 250 cd/m2 - 5 ms - DVI/VGA - Black")
-      expect(resp.url).to eq("http://reviewed.api.pgpartner.com/mrdr.php?url=http%3A%2F%2Freviewed.api.pgpartner.com%2Fsearch_getprod.php%3Fmasterid%3D962261805")
+      expect(resp.title).to eq("Vitamix Professional Series 750 Black with 64-Oz. Container")
+      expect(resp.url).to eq("http://rd.bizrate.com/rd?t=http%3A%2F%2Fwww.amazon.com%2Fdp%2FB00LFVV8CM%2Fref%3Dasc_df_B00LFVV8CM4586991%3Fsmid%3DATVPDKIKX0DER%26tag%3Dshopzilla0d-20%26ascsubtag%3Dshopzilla_rev_128-20%3BSZ_REDIRECT_ID%26linkCode%3Ddf0%26creative%3D395093%26creativeASIN%3DB00LFVV8CM&mid=184056&cat_id=13050809&atom=10526&prod_id=&oid=6514681944&pos=1&b_id=18&bid_type=4&bamt=fd093910640770ad&cobrand=1&ppr=1bcdf7dc04befe13&af_sid=76&mpid=B00LFVV8CM&brandId=357327&rf=af1&af_assettype_id=10&af_creative_id=2912&af_id=614546&af_placement_id=1")
     end
   end
 end
