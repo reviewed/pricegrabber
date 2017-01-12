@@ -9,10 +9,10 @@ module PriceGrabber
     # @param wants [Array<String>] Attributes from the response that should be made available within this response
     def initialize(response, wants)
       @status = response.code
-      resp_hash = Hash.from_xml(response.body)
-      @error = resp_hash["document"]["error"]
       @results = []
-      [resp_hash["document"]["product"]].flatten.each do |product|
+      return if @status != 200
+      resp_hash = Hash.from_xml(response.body)
+      [resp_hash["ProductResponse"]["Offers"]["Offer"]].flatten.each do |product|
         curr_result = ResponseItem.with_attributes(wants)
         wants.map do |want|
           parts = want.split(".")
@@ -23,7 +23,7 @@ module PriceGrabber
             curr = parts.shift
           end
 
-          curr_result.public_send(:"#{want.tr(".", "_")}=", curr_value)
+          curr_result.public_send(:"#{want.downcase.tr(".", "_")}=", curr_value)
         end
         @results << curr_result unless curr_result.empty?
       end
@@ -34,7 +34,7 @@ module PriceGrabber
     end
 
     def successful?
-      @status < 300 && @status >= 200 && @error == nil
+      @status < 300 && @status >= 200
     end
   end
 end

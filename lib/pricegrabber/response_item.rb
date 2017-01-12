@@ -6,7 +6,7 @@ module PriceGrabber
                      self
                    end
       attrs.each do |attr|
-        attr_clean = attr.tr(".", "_")
+        attr_clean = attr.downcase.tr(".", "_")
         eigenclass.instance_eval do
           define_method(attr_clean.to_sym) do
             instance_variable_get(:"@#{attr_clean}")
