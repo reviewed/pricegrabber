@@ -59,10 +59,6 @@ module PriceGrabber
       "version=#{@version}"
     end
 
-    def pid
-      "publisherId=#{@pid}"
-    end
-
     def key
       "apiKey=#{@key}"
     end
