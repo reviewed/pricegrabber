@@ -7,7 +7,7 @@ module PriceGrabber
     end
 
     def find_by_id(asin: nil, upc: nil)
-      Request.new(asin: asin, upc: upc,publisher_id: @publisher_id, key: @api_key, environment: @environment)
+      Request.new(asin: asin, upc: upc, publisher_id: @publisher_id, key: @api_key, environment: @environment)
     end
 
     def search(query)
